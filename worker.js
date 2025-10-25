@@ -3,24 +3,27 @@ export default {
   async scheduled(event, env, ctx) {
     try {
       const WEBHOOK_URL = env.CIRCLECI_WEBHOOK_URL;
+      const CIRCLECI_TOKEN = env.CIRCLECI_TOKEN; // 新增 Token 環境變數
       const response = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
-        }
+          "Content-Type": "application/json",
+          "Circle-Token": CIRCLECI_TOKEN // 添加認證
+        },
+        body: JSON.stringify({}) // 空正文觸發預設分支
       });
-      const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+      const timestamp = new Date().toISOString();
       console.log(`[${timestamp}] Scheduled request executed`);
       console.log(`Response status: ${response.status}`);
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`HTTP error! status: ${response.status}, body: ${errorText}`);
       } else {
-        const result = await response.text();
-        console.log("Response body:", result);
+        const result = await response.json(); // 解析 JSON 回應
+        console.log("Response body:", JSON.stringify(result));
       }
     } catch (error) {
-      console.error("Scheduled request failed:", error);
+      console.error("Scheduled request failed:", error.message);
     }
   },
 
@@ -29,10 +32,12 @@ export default {
     if (request.url.includes('/test')) {
       try {
         const WEBHOOK_URL = env.CIRCLECI_WEBHOOK_URL;
+        const CIRCLECI_TOKEN = env.CIRCLECI_TOKEN; // 新增 Token
         const response = await fetch(WEBHOOK_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Circle-Token': CIRCLECI_TOKEN // 添加認證
           },
         });
         const responseText = await response.text();
